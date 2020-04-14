@@ -1,0 +1,18 @@
+#!bin/sh -l
+#PBS -N chHW5_1
+#PBS -q scholar
+#PBS -l nodes=1:ppn=20
+#PBS -l walltime=12:00:00
+
+cd $PBS_O_WORKDIR
+pwd
+ 
+module purge
+module load bioinfo
+module load HMMER
+
+hmmsearch -o HM5_Genbank.TIGR --tblout HM5_Genbank.TIGR_1.TIGR.tsv --cut_tc ../../data/TIGRFAMs/TIGRFAMs_14.0_HMM.LIB Amino_acid_fasta
+
+hmmsearch -o HM5_Genbank.TIGR.Pfam --tblout HM5_Genbank_TIGR_1.Pfam.tsv --cut_tc ../../data/Pfam/Pfam-A.hmm Amino_acid_fasta
+
+cd $PBS_O_WORKDIR

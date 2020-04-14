@@ -1,0 +1,77 @@
+cd (to home directory containing compliantFasta folder)  
+../PorthoMCL-master/orthomclFilterFasta ./compliantFasta/ 10 20
+
+mkdir 2.filteredFasta
+mv goodProteins.fasta sample/2.filteredFasta/
+mv poorProteins.fasta sample/2.filteredFasta/
+
+makeblastdb -in 2.filteredFasta/goodProteins.fasta  -dbtype prot
+mkdir 3.blastdb
+mv 2.filteredFasta/goodProteins.fasta.* 3.blastdb/
+
+mkdir 3.blastquery 
+
+../PorthoMCL-master/porthomclSplitFasta.py -i 2.filteredFasta/goodProteins.fasta  -o 3.blastquery 
+
+mkdir 3.blastres
+
+for query in 3.blastquery/*
+do
+   strand=$(basename "$query")
+   strand="${strand%.*}" # remove .fasta
+   /usr/local/ncbi/blast/bin/blastp -query 3.blastquery/$strand.fasta  -db 3.blastdb/goodProteins.fasta  -seg yes  -dbsize 100000000  -evalue 1e-5  -outfmt 6 -num_threads 1 -out 3.blastres/$strand.tab
+done
+ 
+mkdir 4.splitSimSeq
+
+for blres in 3.blastres/*
+do
+    strand=$(basename "$blres")
+    strand="${strand%.*}" # remove .tab
+    ../PorthoMCL-master/porthomclBlastParser 3.blastres/$strand.tab compliantFasta >> 4.splitSimSeq/$strand.ss.tsv
+done
+
+mkdir 5.paralogTemp
+mkdir 5.besthit
+../PorthoMCL-master/porthomclPairsBestHit.py -t ./taxon_list -s ./4.splitSimSeq -b ./5.besthit -q ./5.paralogTemp -x 1
+../PorthoMCL-master/porthomclPairsBestHit.py -t ./taxon_list -s ./4.splitSimSeq -b ./5.besthit -q ./5.paralogTemp -x 2
+../PorthoMCL-master/porthomclPairsBestHit.py -t ./taxon_list -s ./4.splitSimSeq -b ./5.besthit -q ./5.paralogTemp -x 3
+../PorthoMCL-master/porthomclPairsBestHit.py -t ./taxon_list -s ./4.splitSimSeq -b ./5.besthit -q ./5.paralogTemp -x 4
+../PorthoMCL-master/porthomclPairsBestHit.py -t ./taxon_list -s ./4.splitSimSeq -b ./5.besthit -q ./5.paralogTemp -x 5
+../PorthoMCL-master/porthomclPairsBestHit.py -t ./taxon_list -s ./4.splitSimSeq -b ./5.besthit -q ./5.paralogTemp -x 6
+../PorthoMCL-master/porthomclPairsBestHit.py -t ./taxon_list -s ./4.splitSimSeq -b ./5.besthit -q ./5.paralogTemp -x 7
+../PorthoMCL-master/porthomclPairsBestHit.py -t ./taxon_list -s ./4.splitSimSeq -b ./5.besthit -q ./5.paralogTemp -x 8
+../PorthoMCL-master/porthomclPairsBestHit.py -t ./taxon_list -s ./4.splitSimSeq -b ./5.besthit -q ./5.paralogTemp -x 9
+
+mkdir 6.orthologs
+../PorthoMCL-master/porthomclPairsOrthologs.py -t taxon_list -b 5.besthit -o 6.orthologs -x 1
+../PorthoMCL-master/porthomclPairsOrthologs.py -t taxon_list -b 5.besthit -o 6.orthologs -x 2
+../PorthoMCL-master/porthomclPairsOrthologs.py -t taxon_list -b 5.besthit -o 6.orthologs -x 3
+../PorthoMCL-master/porthomclPairsOrthologs.py -t taxon_list -b 5.besthit -o 6.orthologs -x 4
+../PorthoMCL-master/porthomclPairsOrthologs.py -t taxon_list -b 5.besthit -o 6.orthologs -x 5
+../PorthoMCL-master/porthomclPairsOrthologs.py -t taxon_list -b 5.besthit -o 6.orthologs -x 6
+../PorthoMCL-master/porthomclPairsOrthologs.py -t taxon_list -b 5.besthit -o 6.orthologs -x 7
+../PorthoMCL-master/porthomclPairsOrthologs.py -t taxon_list -b 5.besthit -o 6.orthologs -x 8
+../PorthoMCL-master/porthomclPairsOrthologs.py -t taxon_list -b 5.besthit -o 6.orthologs -x 9
+../PorthoMCL-master/porthomclPairsOrthologs.py -t taxon_list -b 5.besthit -o 6.orthologs -x 10
+
+awk -F'[|\t]' '{print $4 >> ("7.ogenes/"$3".og.tsv")}' 6.orthologs/*.ort.tsv
+awk -F'[|\t]' '{print $2 >> ("7.ogenes/"$1".og.tsv")}' 6.orthologs/*.ort.tsv
+
+mkdir 7.paralogs
+../PorthoMCL-master/porthomclPairsInParalogs.py -t ./taxon_list -q ./5.paralogTemp -o ./7.ogenes -p ./7.paralogs -x 1
+../PorthoMCL-master/porthomclPairsInParalogs.py -t ./taxon_list -q ./5.paralogTemp -o ./7.ogenes -p ./7.paralogs -x 2
+../PorthoMCL-master/porthomclPairsInParalogs.py -t ./taxon_list -q ./5.paralogTemp -o ./7.ogenes -p ./7.paralogs -x 3
+../PorthoMCL-master/porthomclPairsInParalogs.py -t ./taxon_list -q ./5.paralogTemp -o ./7.ogenes -p ./7.paralogs -x 4
+../PorthoMCL-master/porthomclPairsInParalogs.py -t ./taxon_list -q ./5.paralogTemp -o ./7.ogenes -p ./7.paralogs -x 5
+../PorthoMCL-master/porthomclPairsInParalogs.py -t ./taxon_list -q ./5.paralogTemp -o ./7.ogenes -p ./7.paralogs -x 6
+../PorthoMCL-master/porthomclPairsInParalogs.py -t ./taxon_list -q ./5.paralogTemp -o ./7.ogenes -p ./7.paralogs -x 7
+../PorthoMCL-master/porthomclPairsInParalogs.py -t ./taxon_list -q ./5.paralogTemp -o ./7.ogenes -p ./7.paralogs -x 8
+../PorthoMCL-master/porthomclPairsInParalogs.py -t ./taxon_list -q ./5.paralogTemp -o ./7.ogenes -p ./7.paralogs -x 9
+../PorthoMCL-master/porthomclPairsInParalogs.py -t ./taxon_list -q ./5.paralogTemp -o ./7.ogenes -p ./7.paralogs -x 10
+
+cat 6.orthologs/*.tsv >> 8.all.ort.tsv
+/Users/ethanhillman/local/bin/mcl 8.all.ort.tsv  --abc -I 1.5 -t 4 -o 8.all.ort.group
+
+cat 7.paralogs/*.tsv >> 8.all.par.tsv
+/Users/ethanhillman/local/bin/mcl 8.all.par.tsv  --abc -I 1.5 -t 4 -o 8.all.par.group
